@@ -1,0 +1,134 @@
+---
+title: "IODS final assignment"
+author: 
+- "Hertta Lehvävirta"
+- "hertta.lehvavirta@helsinki.fi"
+date: "8.3.2017"
+output: html_document
+
+---
+
+
+#Regression analysis on crime rate in Boston towns
+
+###This is my final assignment for the IODS course. In this report I will study how crime rate is related to other city-related variables on town level in the City of Boston. A free dataset included in R's MASS package will provide a ready dataset for my purposes. 
+
+First I'll take a more general look on the data, after which I will study whether linear regression model would explain the variations of crime rates in Boston towns.
+
+The Boston dataset includes 14 variables, which describe different aspects related to housing, city structure and demographics. The variables of the data are as follows:
+
+1. crim (per capita crime rate by town)
+
+2. zn (proportion of residential land zoned for lots over 25,000 sq.ft)
+
+3. indus (proportion of non-retail business acres per town)
+
+4. chas (Charles River dummy variable;  1 if tract bounds river; 0 otherwise)
+
+5. nox (nitrogen oxides concentration, parts per 10 million)
+
+6. rm (average number of rooms per dwelling)
+
+7. age (proportion of owner-occupied units built prior to 1940)
+
+8. dis (weighted mean of distances to five Boston employment centres)
+
+9. rad (index of accessibility to radial highways)
+
+10. tax (full-value property-tax rate per \$10,000)
+
+11. ptratio (pupil-teacher ratio by town)
+
+12. black (1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town)
+
+13. lstat (lower status of the population; percent)
+
+14. medv (median value of owner-occupied homes in \$1000s)
+
+First I'll take a look at the stucture of the data:
+
+```{r}
+library(MASS)
+data(Boston)
+str(Boston)
+```
+
+Here we see, that most of the variables are numerical (continuos) but there are also two integer values: charles dummy variable and accessibility index.
+
+
+Next I'll plot all the variables as scatterplots and study the correlations between the variables: 
+
+
+```{r}
+
+library(GGally)
+library(ggplot2)
+
+ggpairs(Boston, aes(alpha=0.4))
+```
+
+
+From the plot matrix we can see, that crime rate seems to correlate best with accessibility to radial highways (0,626), property tax rate (0,583), lower status of the population (0,456), nitrogen oxide concentration (0,421) and proportion of non-retail business acres (0,407). From this we can draw some quick conclusions related to city structure: the crime rate seems to be higher than average in industrial, relatively polluted areas that are close to highways and have poorer than average population. We also see that the crime rate is negatively correlated with residential property values (-0,388). 
+What we also should  consider is that many of these stated variables have a high correlation with each other: for example proportion of non-retail business acres and property tax rate (0,721) as well as accessibility to radial highways and nitrogen oxide concentration have a high correlation (0,611). This may limit our selection of variables in multiple variables linear modelling.
+
+Next I'll take a closer look on the scatter plots of variables that have a high correlation with crimerate: 
+
+```{r, echo=TRUE}
+library(dplyr)
+coln <- c("rad", "tax", "lstat", "nox", "indus", "medv")
+crimerate <- Boston$crim
+selection <- select(Boston, one_of(coln))
+
+for(i in 1:length(coln)){
+x <- selection[,i]
+plot(x, crimerate, title(coln[i]))}
+```
+
+From the scatter plots we see, that the relationship between crimerate and the variables don't seem to fit a linear assumption very well. Let's anyways study this possibility by fitting the variables that have a most "linear" resembling scatterplots.
+
+```{r}
+crime_model <- lm(data = Boston, crim ~ lstat + medv)
+summary (crime_model)
+```
+
+From the summary of the model we see, that lower status of population gets a statistically significant p-value, but median value of owner-occupied homes does not. Let's also study these variables in separate models:
+
+```{r}
+lstat_model <- lm(data = Boston, crim ~ lstat)
+summary (lstat_model)
+
+```
+
+
+
+```{r}
+medv_model <- lm(data = Boston, crim ~ medv)
+summary (medv_model)
+```
+
+
+Here we see, that when including only median value of owner-occupied homes in the model, we get a higher correlation and a statistically significant result. This is probably because of collinearity:
+
+```{r}
+medv_lstat <- lm(data = Boston, lstat ~ medv)
+summary(medv_lstat)
+```
+
+Now that we see that the chosen variables are also highly correlated, we should remove one of them from the original model. I will keep the variable that has a higher correlation with crimerate: lower status of the population. 
+
+So in the end we are only left with one variable. Next I'll study how well lstat-variable fits my assumption of linear relationship with crimerate:
+
+```{r}
+plot(lstat_model, which = c(1,2,5))
+```
+
+From the first plot (Residuals vs Fitted) we can see, that the residuals are not evenly distributed, but they seem to increase as the lower status of the population icreases. From this we can already see that the assumption about linearity doesn't hold.
+
+The second plot (Normal Q-Q) lets us validate the distribution of residuals even better: our model's residuals are shared in percentiles and plotted against theoretical percentiles of normally distributed data. From the plot we can see that the residuals of our model don't fit the line very well, but they actually form a s-like curve with quite high deviation from the line in the upper right corner. As well as from the previous plot, from this we see that the residuals grow as the lower status of the population increases. 
+
+The third plot (Residuals vs Leverage) lets us see if any outliers influence the regression line significantly. If some points are outside the Cook's distance lines, they are influential for the model. Here we can see that all the observations fit inside the Cook's distance lines, so outliers are not too influential in this case.
+
+To summarize, non of the variables studied seem to have a linear relationship with the crimerate variable. 
+
+
+
