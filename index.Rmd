@@ -47,7 +47,7 @@ The Boston dataset includes 14 variables, which describe different aspects relat
 
 First I'll take a look at the stucture of the data:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(MASS)
 data(Boston)
 str(Boston)
@@ -59,7 +59,7 @@ Here we see, that most of the variables are numerical (continuos) but there are 
 Next I'll plot all the variables as scatterplots and study the correlations between the variables: 
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 
 library(GGally)
 library(ggplot2)
@@ -73,7 +73,7 @@ What we also should  consider is that many of these stated variables have a high
 
 Next I'll take a closer look on the scatter plots of variables that have a high correlation with crimerate: 
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 library(dplyr)
 coln <- c("rad", "tax", "lstat", "nox", "indus", "medv")
 crimerate <- Boston$crim
@@ -86,14 +86,14 @@ plot(x, crimerate, title(coln[i]))}
 
 From the scatter plots we see, that the relationship between crimerate and the variables don't seem to fit a linear assumption very well. Let's anyways study this possibility by fitting the variables that have a most "linear" resembling scatterplots.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 crime_model <- lm(data = Boston, crim ~ lstat + medv)
 summary (crime_model)
 ```
 
 From the summary of the model we see, that lower status of population gets a statistically significant p-value, but median value of owner-occupied homes does not. Let's also study these variables in separate models:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 lstat_model <- lm(data = Boston, crim ~ lstat)
 summary (lstat_model)
 
@@ -101,7 +101,7 @@ summary (lstat_model)
 
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 medv_model <- lm(data = Boston, crim ~ medv)
 summary (medv_model)
 ```
@@ -109,7 +109,7 @@ summary (medv_model)
 
 Here we see, that when including only median value of owner-occupied homes in the model, we get a higher correlation and a statistically significant result. This is probably because of collinearity:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 medv_lstat <- lm(data = Boston, lstat ~ medv)
 summary(medv_lstat)
 ```
@@ -118,7 +118,7 @@ Now that we see that the chosen variables are also highly correlated, we should 
 
 So in the end we are only left with one variable. Next I'll study how well lstat-variable fits my assumption of linear relationship with crimerate:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 plot(lstat_model, which = c(1,2,5))
 ```
 
